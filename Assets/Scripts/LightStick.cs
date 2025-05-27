@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,46 +10,64 @@ public class LightStick : MonoBehaviour
     [Header("Bullet")]
     public GameObject bulletPrefab;
     public Transform bulletPoint;
-    public int remainBullets;
-    public int maxBullets;
-    public List<SpriteRenderer> remainBulletSprites;
-    public Sprite noBulletSprite;
-    public Sprite yesBulletSprite;
+    public int remainBullets = 99;
+    public int maxBullets = 99;
     public AudioSource shoot;
+
+    private Vector3 defaultLocalPosition;
+
+    private void Awake()
+    {
+        defaultLocalPosition = transform.localPosition;
+    }
 
     private void Update()
     {
-        if (mainMovement.cleared || mainMovement.dead)
+        // mainMovement 연결 안 되어 있으면 오류 출력
+        if (mainMovement == null)
         {
-            if (mainMovement.cleared)
-            {
-                mainSprite.flipX = false;
-            }
+            Debug.LogError("mainMovement가 연결되지 않았습니다.");
             return;
         }
 
-        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        float angleRad = Mathf.Atan2(mouseWorld.y - transform.position.y, mouseWorld.x - transform.position.x);
-        float angleDeg = angleRad * Mathf.Rad2Deg - 90f;
+        // PlayerMovement의 필드가 접근 가능해야 함
+        if (mainMovement.cleared || mainMovement.dead)
+            return;
 
-        mainSprite.flipX = (angleDeg > 0f || angleDeg < -180f);
-        transform.rotation = Quaternion.Euler(0f, 0f, angleDeg);
+        // 방향 반전
+        SpriteRenderer sr = mainMovement.GetComponent<SpriteRenderer>();
+        bool isFlipped = sr != null && sr.flipX;
 
-        for (int i = remainBulletSprites.Count; i >= 1; i--)
+        Vector3 pos = defaultLocalPosition;
+        pos.x *= isFlipped ? -1f : 1f;
+        transform.localPosition = pos;
+
+        // 마우스를 따라 회전
+        Camera cam = Camera.main;
+        if (cam != null)
         {
-            remainBulletSprites[i - 1].sprite = (remainBullets < i ? noBulletSprite : yesBulletSprite);
+            Vector3 mouseWorld = cam.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 dir = mouseWorld - transform.position;
+            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
         }
 
         if (maxBullets > 0 && remainBullets <= 0)
-        {
             return;
-        }
 
-        if (!EventSystem.current.IsPointerOverGameObject() && Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
         {
-            shoot.Play();
-            UnityEngine.Object.Instantiate(bulletPrefab, bulletPoint.position, transform.rotation); // ✅ 수정된 부분
-            remainBullets--;
+            if (shoot != null) shoot.Play();
+
+            if (bulletPrefab != null && bulletPoint != null)
+            {
+                Instantiate(bulletPrefab, bulletPoint.position, transform.rotation);
+                remainBullets--;
+            }
+            else
+            {
+                Debug.LogWarning("bulletPrefab 또는 bulletPoint가 연결되지 않았습니다!");
+            }
         }
     }
 }

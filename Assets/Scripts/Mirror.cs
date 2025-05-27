@@ -20,8 +20,10 @@ public class Mirror : MonoBehaviour
 
         for (;;)
         {
-            RaycastHit2D leftHit = Physics2D.Raycast(bullet.transform.position - bullet.GetForwardVector(z) * num2, bullet.transform.right * -1f, num, mirrorMask);
-            RaycastHit2D rightHit = Physics2D.Raycast(bullet.transform.position - bullet.GetForwardVector(z) * num2, bullet.transform.right, num, mirrorMask);
+            Vector3 origin = bullet.transform.position - (Vector3)(bullet.GetForwardVector(z) * num2);
+
+            RaycastHit2D leftHit = Physics2D.Raycast(origin, bullet.transform.right * -1f, num, mirrorMask);
+            RaycastHit2D rightHit = Physics2D.Raycast(origin, bullet.transform.right, num, mirrorMask);
 
             Debug.Log($"{leftHit.collider != null} / {rightHit.collider != null}");
 
@@ -84,9 +86,11 @@ public class Mirror : MonoBehaviour
     {
         Debug.Log($"{bullet.transform.rotation.eulerAngles.z} / {angle}");
 
-        GameObject spawned = UnityEngine.Object.Instantiate(bulletPrefab, bullet.transform.position, Quaternion.Euler(0f, 0f, angle));
+        GameObject spawned = Instantiate(bulletPrefab, bullet.transform.position, Quaternion.Euler(0f, 0f, angle));
         Bullet newBullet = spawned.GetComponent<Bullet>();
         newBullet.IsSpawnedByMirror = true;
+
+        // 색상 유지
         newBullet.GetComponent<SpriteRenderer>().color = bullet.GetComponent<SpriteRenderer>().color;
     }
 }

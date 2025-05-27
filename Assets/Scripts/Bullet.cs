@@ -10,16 +10,11 @@ public class Bullet : MonoBehaviour
     [Header("Bullet")]
     public float mirrorCheckDistance = 0.36f;
     public float bulletSpeed = 1f;
-    public float scaleSpeed = 1f;
-    public float bulletLightIntensitySpeed;
     public Light2D bulletLight;
 
     [Header("Touch")]
     public Light2D touchLight;
-    public float touchScaleSpeed;
-    public float touchLightIntensitySpeed;
     public Vector3 touchScale;
-
     public LayerMask wallMask;
 
     private bool _touched;
@@ -40,35 +35,28 @@ public class Bullet : MonoBehaviour
     {
         if (!_touched)
         {
-            bulletLight.intensity -= bulletLightIntensitySpeed * Time.deltaTime;
             transform.position += GetForwardVector(transform.rotation.eulerAngles.z) * bulletSpeed * Time.deltaTime;
-            transform.localScale -= new Vector3(scaleSpeed, scaleSpeed, scaleSpeed) * Time.deltaTime;
         }
-        else
-        {
-            touchLight.intensity -= touchLightIntensitySpeed * Time.deltaTime;
-            transform.localScale -= new Vector3(touchScaleSpeed, touchScaleSpeed, touchScaleSpeed) * Time.deltaTime;
-        }
-
-        if (transform.localScale.x <= 0f)
-        {
-            Destroy(gameObject);
-        }
+        // 닿은 후에는 멈추고 빛만 유지됨 (아무 처리 없음)
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.layer == 10)
+        if (_touched) return;
+
+        int layer = other.gameObject.layer;
+
+        if (layer == 10)
         {
             _touched = true;
             bulletLight.gameObject.SetActive(false);
             touchLight.gameObject.SetActive(true);
             transform.localScale = touchScale;
 
-            Lever lever = other.gameObject.GetComponent<Lever>();
+            Lever lever = other.GetComponent<Lever>();
             if (lever != null)
             {
-                StartCoroutine(lever.TouchBullet(transform.localScale.x / touchScaleSpeed));
+                StartCoroutine(lever.TouchBullet(1f));
             }
         }
 
@@ -77,9 +65,7 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        Debug.Log("Something triggered: " + other.gameObject.name);
-
-        if ((wallMask.value & (1 << other.gameObject.layer)) != 0)
+        if ((wallMask.value & (1 << layer)) != 0)
         {
             _touched = true;
             bulletLight.gameObject.SetActive(false);
@@ -87,31 +73,28 @@ public class Bullet : MonoBehaviour
             transform.localScale = touchScale;
         }
 
-        if (other.gameObject.layer == 12)
+        if (layer == 12)
         {
-            Debug.Log("Mirror Reflect");
-            other.gameObject.GetComponent<Mirror>()?.Reflect(this);
+            other.GetComponent<Mirror>()?.Reflect(this);
         }
 
-        if (other.gameObject.layer == 13)
+        if (layer == 13)
         {
-            Debug.Log("Handle Interact");
-            Handle handle = other.gameObject.GetComponent<Handle>();
+            Handle handle = other.GetComponent<Handle>();
             if (handle != null)
             {
                 StartCoroutine(handle.Rotate(1));
             }
         }
 
-        if (other.gameObject.layer == 14)
+        if (layer == 14)
         {
             Destroy(gameObject);
         }
 
-        if (other.gameObject.layer == 15)
+        if (layer == 15)
         {
-            Debug.Log("Prism Interact");
-            other.gameObject.GetComponent<Prism>()?.Do(this);
+            other.GetComponent<Prism>()?.Do(this);
         }
     }
 

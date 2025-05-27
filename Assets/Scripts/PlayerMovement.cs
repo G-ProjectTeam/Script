@@ -4,14 +4,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody2D))]
-[RequireComponent(typeof(Animator))]
 public class PlayerMovement : MonoBehaviour
 {
     private Transform _door;
     public static PlayerMovement Instance;
 
     public Rigidbody2D rigid;
-    public Animator animator;
     public bool cleared;
     public bool dead;
     public Collider2D floorCollider;
@@ -39,9 +37,6 @@ public class PlayerMovement : MonoBehaviour
         if (rigid == null)
             rigid = GetComponent<Rigidbody2D>();
 
-        if (animator == null)
-            animator = GetComponent<Animator>();
-
         if (footstep == null)
             footstep = GetComponent<AudioSource>();
 
@@ -62,7 +57,6 @@ public class PlayerMovement : MonoBehaviour
             footstepClear.Play();
 
         cleared = true;
-        animator.SetTrigger("Clear");
         transform.position = door.position - new Vector3(0f, 0.998f, 0f);
 
         foreach (GameObject obj in disableWhenDead)
@@ -74,7 +68,6 @@ public class PlayerMovement : MonoBehaviour
         if (dead) yield break;
 
         dead = true;
-        animator.SetTrigger("Dead");
 
         if (hurt != null)
             hurt.Play();
@@ -87,19 +80,13 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         if (cleared || dead)
-        {
-            animator.SetBool("IsWalking", false);
             return;
-        }
 
         float axisRaw = Input.GetAxisRaw("Horizontal");
 
-        // ▶ 부드러운 속도 이동 방식
         rigid.linearVelocity = new Vector2(axisRaw * moveSpeed, rigid.linearVelocity.y);
 
-        animator.SetBool("IsWalking", Mathf.Abs(axisRaw) > 0f);
-
-        // 👉 캐릭터 방향 설정 (오른쪽 = true)
+        // 방향에 따라 캐릭터 이미지 반전
         if (axisRaw != 0f)
         {
             GetComponent<SpriteRenderer>().flipX = axisRaw > 0f;
