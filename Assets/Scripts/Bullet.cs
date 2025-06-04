@@ -8,8 +8,9 @@ public class Bullet : MonoBehaviour
     public bool IsSpawnedByMirror;
 
     [Header("Bullet")]
+    [Tooltip("빛이 나아가는 속도")]
+    public float bulletSpeed = 5f;
     public float mirrorCheckDistance = 0.36f;
-    public float bulletSpeed = 1f;
     public Light2D bulletLight;
 
     [Header("Touch")]
@@ -37,7 +38,6 @@ public class Bullet : MonoBehaviour
         {
             transform.position += GetForwardVector(transform.rotation.eulerAngles.z) * bulletSpeed * Time.deltaTime;
         }
-        // 닿은 후에는 멈추고 빛만 유지됨 (아무 처리 없음)
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -60,10 +60,7 @@ public class Bullet : MonoBehaviour
             }
         }
 
-        if (IsSpawnedByMirror)
-        {
-            return;
-        }
+        if (IsSpawnedByMirror) return;
 
         if ((wallMask.value & (1 << layer)) != 0)
         {
@@ -100,6 +97,8 @@ public class Bullet : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log("총알 속도: " + bulletSpeed);
+
         if (IsSpawnedByMirror)
         {
             Invoke("NoMirror", 0.05f);

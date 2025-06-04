@@ -13,6 +13,7 @@ public class LightStick : MonoBehaviour
     public int remainBullets = 99;
     public int maxBullets = 99;
     public AudioSource shoot;
+    public float bulletSpeed = 5f; // Inspector에서 설정 가능
 
     private Vector3 defaultLocalPosition;
 
@@ -23,18 +24,15 @@ public class LightStick : MonoBehaviour
 
     private void Update()
     {
-        // mainMovement 연결 안 되어 있으면 오류 출력
         if (mainMovement == null)
         {
             Debug.LogError("mainMovement가 연결되지 않았습니다.");
             return;
         }
 
-        // PlayerMovement의 필드가 접근 가능해야 함
         if (mainMovement.cleared || mainMovement.dead)
             return;
 
-        // 방향 반전
         SpriteRenderer sr = mainMovement.GetComponent<SpriteRenderer>();
         bool isFlipped = sr != null && sr.flipX;
 
@@ -42,7 +40,6 @@ public class LightStick : MonoBehaviour
         pos.x *= isFlipped ? -1f : 1f;
         transform.localPosition = pos;
 
-        // 마우스를 따라 회전
         Camera cam = Camera.main;
         if (cam != null)
         {
@@ -61,7 +58,24 @@ public class LightStick : MonoBehaviour
 
             if (bulletPrefab != null && bulletPoint != null)
             {
-                Instantiate(bulletPrefab, bulletPoint.position, transform.rotation);
+                Vector3 spawnPos = bulletPoint.position + transform.up * 0.6f + Vector3.up * 0.15f;
+                GameObject bulletObj = Instantiate(bulletPrefab, spawnPos, transform.rotation);
+
+                // 💡 여기서 bulletSpeed를 명시적으로 전달
+                Bullet bullet = bulletObj.GetComponent<Bullet>();
+                if (bullet != null)
+                {
+                    bullet.bulletSpeed = bulletSpeed;
+                    Debug.Log("총알 속도: " + bullet.bulletSpeed);
+                }
+
+                Collider2D playerCollider = mainMovement.GetComponent<Collider2D>();
+                Collider2D bulletCollider = bulletObj.GetComponent<Collider2D>();
+                if (playerCollider != null && bulletCollider != null)
+                {
+                    Physics2D.IgnoreCollision(bulletCollider, playerCollider);
+                }
+
                 remainBullets--;
             }
             else

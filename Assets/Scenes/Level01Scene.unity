@@ -1442,7 +1442,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3245510406858491918, guid: ea69f142ed91c1c489098fce71bf1495, type: 3}
       propertyPath: bulletSpeed
-      value: 5
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3245510406858491918, guid: ea69f142ed91c1c489098fce71bf1495, type: 3}
       propertyPath: touchScale.x
