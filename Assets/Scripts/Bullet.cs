@@ -18,6 +18,9 @@ public class Bullet : MonoBehaviour
     public Vector3 touchScale;
     public LayerMask wallMask;
 
+    [Header("Wall Hit Effect")]
+    public GameObject lightOnWallPrefab;
+
     private bool _touched;
 
     private void Awake()
@@ -46,6 +49,7 @@ public class Bullet : MonoBehaviour
 
         int layer = other.gameObject.layer;
 
+        // Lever와 충돌
         if (layer == 10)
         {
             _touched = true;
@@ -62,19 +66,32 @@ public class Bullet : MonoBehaviour
 
         if (IsSpawnedByMirror) return;
 
+        // 벽과 충돌 → 빛 고정 Prefab 생성
         if ((wallMask.value & (1 << layer)) != 0)
         {
             _touched = true;
-            bulletLight.gameObject.SetActive(false);
-            touchLight.gameObject.SetActive(true);
-            transform.localScale = touchScale;
+
+            // 빛 Prefab 생성
+            if (lightOnWallPrefab != null)
+            {
+                Instantiate(lightOnWallPrefab, transform.position, Quaternion.identity);
+            }
+            else
+            {
+                Debug.LogWarning("lightOnWallPrefab이 할당되지 않음!");
+            }
+
+            // 기존 Bullet 제거
+            Destroy(gameObject);
         }
 
+        // Mirror와 충돌
         if (layer == 12)
         {
             other.GetComponent<Mirror>()?.Reflect(this);
         }
 
+        // Handle와 충돌
         if (layer == 13)
         {
             Handle handle = other.GetComponent<Handle>();
@@ -84,11 +101,13 @@ public class Bullet : MonoBehaviour
             }
         }
 
+        // Spike와 충돌 → Destroy
         if (layer == 14)
         {
             Destroy(gameObject);
         }
 
+        // Prism과 충돌
         if (layer == 15)
         {
             other.GetComponent<Prism>()?.Do(this);
